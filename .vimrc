@@ -1,23 +1,106 @@
-set background=dark
-filetype plugin indent on
+" =============================================================================
+" Plugins (Vundle) - precisa vir antes de tudo
+" =============================================================================
+set nocompatible              " be iMproved, required
+filetype off                  " required
+
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+
+" let Vundle manage Vundle, required
+Plugin 'VundleVim/Vundle.vim'
+
+" Autocomplete / LSP (precisa do Node.js >= 16)
+Plugin 'neoclide/coc.nvim', {'branch': 'release'}
+
+" Busca de arquivos (o binario fzf vem do apt: sudo apt install fzf)
+Plugin 'junegunn/fzf'
+Plugin 'junegunn/fzf.vim'
+
+" Arquivos e git
+Plugin 'scrooloose/nerdtree'
+Plugin 'Xuyuanp/nerdtree-git-plugin'
+Plugin 'tpope/vim-fugitive'
+
+" Interface
+Plugin 'vim-airline/vim-airline'
+Plugin 'vim-airline/vim-airline-themes'
+Plugin 'ryanoasis/vim-devicons'
+
+" Edicao
+Plugin 'raimondi/delimitmate'
+Plugin 'mateusbraga/vim-spell-pt-br'
+
+" Python
+Plugin 'vim-scripts/indentpython.vim'
+
+" Temas
+Plugin 'morhetz/gruvbox'
+Plugin 'joshdick/onedark.vim'
+Plugin 'dracula/vim', { 'name': 'dracula' }
+Plugin 'bignimbus/pop-punk.vim'
+Plugin 'lifepillar/vim-solarized8'
+
+" Outras linguagens - descomente se for usar e rode :PluginInstall
+"Plugin 'fatih/vim-go'
+"Plugin 'rust-lang/rust.vim'
+"Plugin 'pangloss/vim-javascript'
+"Plugin 'moll/vim-node'
+"Plugin 'octol/vim-cpp-enhanced-highlight'
+"Plugin 'vim-scripts/c.vim'
+"Plugin 'omnisharp/omnisharp-vim'
+"Plugin 'oranget/vim-csharp'
+"Plugin 'twinside/vim-haskellconceal'
+"Plugin 'bitc/vim-hdevtools'
+"Plugin 'rstacruz/sparkup', {'rtp': 'vim/'}
+
+" Removidos da config antiga:
+"   command-t      - protocolo git:// falha e exige compilar em Ruby (fzf faz o mesmo)
+"   clang_complete - conflita com o coc no autocomplete
+"   vimsence       - status no Discord, nao funciona no WSL
+"   vim-colorschemes, solarized, solarized8, monokai, farout, onehalf,
+"   vim-code-dark  - temas em excesso
+
+call vundle#end()            " required
+filetype plugin indent on    " required
 syntax on
-set shiftwidth=4
+
+" =============================================================================
+" Configuracoes gerais
+" =============================================================================
+set encoding=utf-8
 set number
-syntax enable
 set title
 set mouse=a
 set incsearch
-set tabstop=4 softtabstop=4
-set undodir=~/.vim/undodir
-set nocompatible              " be iMproved, required
-filetype off                  " required
-" Set internal encoding of vim, not needed on neovim, since coc.nvim using some
-" unicode characters in the file autoload/float.vim
-set encoding=utf-8
-
-" TextEdit might fail if hidden is not set.
 set hidden
 
+" Indentacao: 4 espacos (PEP 8)
+set tabstop=4 softtabstop=4 shiftwidth=4
+set expandtab
+
+" Desfazer persistente entre sessoes
+set undofile
+set undodir=~/.vim/undodir
+
+" Cores
+let &t_ut=''
+set termguicolors
+set background=dark
+silent! colorscheme gruvbox
+
+" Airline
+let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#tabline#show_buffers = 1
+let g:airline#extensions#tabline#switch_buffers_and_tabs = 1
+let g:airline#extensions#tabline#tab_nr_type = 1
+
+" fzf: Ctrl+P abre a busca de arquivos
+nnoremap <c-p> :Files<cr>
+
+" =============================================================================
+" coc.nvim
+" =============================================================================
 " Some servers have issues with backup files, see #649.
 set nobackup
 set nowritebackup
@@ -41,21 +124,21 @@ else
   set signcolumn=yes
 endif
 
-" Use tab for trigger completion with characters ahead and navigate.
-" NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
-" other plugin before putting this into your config.
-inoremap <silent><expr> <TAB>
-      \ pumvisible() ? "\<C-n>" :
-      \ <SID>check_back_space() ? "\<TAB>" :
-      \ coc#refresh()
-inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
-
 function! s:check_back_space() abort
   let col = col('.') - 1
   return !col || getline('.')[col - 1]  =~# '\s'
 endfunction
 
+" Use tab for trigger completion with characters ahead and navigate.
+inoremap <silent><expr> <TAB>
+      \ coc#pum#visible() ? coc#pum#next(1) :
+      \ <SID>check_back_space() ? "\<Tab>" :
+      \ coc#refresh()
+inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
+
 " Use <c-space> to trigger completion.
+inoremap <silent><expr> <c-space> coc#refresh()
+
 if empty(mapcheck("\<C-n>", 'i'))
   inoremap <silent><expr> <C-n> coc#pum#visible() ? coc#pum#next(1) : "\<C-n>"
 endif
@@ -81,15 +164,9 @@ if empty(mapcheck("\<PageUp>", 'i'))
   inoremap <silent><expr> <PageUp> coc#pum#visible() ? coc#pum#scroll(0) : "\<PageUp>"
 endif
 
+" Enter confirma a sugestao
 inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm() : "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
 inoremap <silent><expr> <C-x><C-z> coc#pum#visible() ? coc#pum#stop() : "\<C-x>\<C-z>"
-" remap for complete to use tab and <cr>
-inoremap <silent><expr> <TAB>
-	\ coc#pum#visible() ? coc#pum#next(1):
-	\ <SID>check_back_space() ? "\<Tab>" :
-	\ coc#refresh()
-inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
-inoremap <silent><expr> <c-space> coc#refresh()
 
 hi CocSearch ctermfg=12 guifg=#18A3FF
 hi CocMenuSel ctermbg=109 guibg=#13354A
@@ -169,6 +246,7 @@ endif
 
 " Use CTRL-S for selections ranges.
 " Requires 'textDocument/selectionRange' support of language server.
+" (se o terminal congelar com Ctrl+S, ponha `stty -ixon` no ~/.bashrc)
 nmap <silent> <C-s> <Plug>(coc-range-select)
 xmap <silent> <C-s> <Plug>(coc-range-select)
 
@@ -182,9 +260,7 @@ command! -nargs=? Fold :call     CocAction('fold', <f-args>)
 command! -nargs=0 OR   :call     CocAction('runCommand', 'editor.action.organizeImport')
 
 " Add (Neo)Vim's native statusline support.
-" NOTE: Please see `:h coc-status` for integrations with external plugins that
-" provide custom statusline: lightline.vim, vim-airline.
-set statusline^=%{coc#status()}%{get(b:,'coc_current_function','')}
+set statusline^=%{exists('*coc#status')?coc#status():''}%{get(b:,'coc_current_function','')}
 
 " Mappings for CoCList
 " Show all diagnostics.
@@ -204,123 +280,6 @@ nnoremap <silent><nowait> <space>k  :<C-u>CocPrev<CR>
 " Resume latest coc list.
 nnoremap <silent><nowait> <space>p  :<C-u>CocListResume<CR>
 
+" Extensoes do coc instaladas automaticamente
+let g:coc_global_extensions = ['coc-pyright', 'coc-json']
 
-" set the runtime path to include Vundle and initialize
-set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
-" alternatively, pass a path where Vundle should install plugins
-"call vundle#begin('~/some/path/here')
-"
-Plugin 'neoclide/coc.nvim', { 'branch': 'master', 'do': 'yarn install --frozen-lockfile' }
-
-Plugin 'fatih/vim-go'
-
-Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-
-Plugin 'ryanoasis/vim-devicons'
-
-Plugin 'bignimbus/pop-punk.vim'
-
-Plugin 'Xuyuanp/nerdtree-git-plugin'
-
-Plugin 'junegunn/fzf.vim'
-
-Plugin 'fcpg/vim-farout'
-
-Plugin 'omnisharp/omnisharp-vim'
-
-Plugin 'joshdick/onedark.vim'
-
-Plugin 'vimsence/vimsence'
-
-Plugin 'raimondi/delimitmate'
-
-Plugin 'pangloss/vim-javascript'
-
-Plugin 'mateusbraga/vim-spell-pt-br'
-
-Plugin 'vim-airline/vim-airline-themes'
-
-Plugin 'flazz/vim-colorschemes'
-
-Plugin 'dracula/vim', { 'name': 'dracula' }
-
-Plugin 'sonph/onehalf', {'rtp':'vim'}
-
-Plugin 'sickill/vim-monokai'
-
-Plugin 'twinside/vim-haskellconceal'
-
-Plugin 'octol/vim-cpp-enhanced-highlight'
-
-Plugin 'rip-rip/clang_complete'
-
-Plugin 'rust-lang/rust.vim'
-
-Plugin 'morhetz/gruvbox'
-
-Plugin 'tomasiser/vim-code-dark'
-
-Plugin 'bitc/vim-hdevtools'
-
-Plugin 'moll/vim-node'
-
-Plugin 'c.vim'
-
-Plugin 'altercation/vim-colors-solarized'
-
-Plugin 'scrooloose/nerdtree'
-
-Plugin 'lifepillar/vim-solarized8'
-
-Plugin 'indentpython.vim'
-
-Plugin 'oranget/vim-csharp'
-
-Plugin 'vim-airline/vim-airline'
-
-" let Vundle manage Vundle, required
-Plugin 'VundleVim/Vundle.vim'
-
-" The following are examples of different formats supported.
-" Keep Plugin commands between vundle#begin/end.
-" plugin on GitHub repo
-Plugin 'tpope/vim-fugitive'
-" plugin from http://vim-scripts.org/vim/scripts.html
-" Plugin 'L9'
-" Git plugin not hosted on GitHub
-Plugin 'git://git.wincent.com/command-t.git'
-" git repos on your local machine (i.e. when working on your own plugin)
-
-" The sparkup vim script is in a subdirectory of this repo called vim.
-" Pass the path to set the runtimepath properly.
-Plugin 'rstacruz/sparkup', {'rtp': 'vim/'}
-" Install L9 and avoid a Naming conflict if you've already installed a
-" different version somewhere else.
-" Plugin 'ascenator/L9', {'name': 'newL9'}
-
-" All of your Plugins must be added before the following line
-call vundle#end()            " required
-filetype plugin indent on    " required
-"colorscheme pop-punk
-" To ignore plugin indent changes, instead use:
-"filetype plugin on
-"
-" Brief help
-" :PluginList       - lists configured plugins
-" :PluginInstall    - installs plugins; append `!` to update or just :PluginUpdate
-" :PluginSearch foo - searches for foo; append `!` to refresh local cache
-" :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
-"
-" see :h vundle for more details or wiki for FAQ
-" Put your non-Plugin stuff after this line
-"
-let &t_ut=''
-set termguicolors
-
-let g:airline#extensions#tabline#enabled = 1
-let g:airline#extensions#tabline#show_buffers = 1
-let g:airline#extensions#tabline#switch_buffers_and_tabs = 1
-let g:airline#extensions#tabline#tab_nr_type = 1
-
-nnoremap <c-p> :Files<cr>
